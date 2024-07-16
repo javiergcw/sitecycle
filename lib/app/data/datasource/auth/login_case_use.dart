@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sitecycle/app/data/models/login_result.dart';
+import 'package:sitecycle/app/data/models/response_auth_result.dart';
 import 'package:sitecycle/app/service/firebase/auth/login.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/get_navigation.dart';
@@ -11,7 +11,7 @@ class CUFirebaseAuthLogin {
     required String email,
     required String password,
   }) async {
-    final LoginResult loginResult = await SFirebaseAuthLogin.login(
+    final ResponsAuthResult loginResult = await SFirebaseAuthLogin.login(
       context: context,
       email: email,
       password: password,

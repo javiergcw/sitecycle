@@ -1,9 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:sitecycle/app/data/models/login_result.dart';
+import 'package:sitecycle/app/data/models/response_auth_result.dart';
 
 class SFirebaseAuthLogin {
-  static Future<LoginResult> login({
+  static Future<ResponsAuthResult> login({
     required BuildContext context,
     required String email,
     required String password,
@@ -15,7 +15,7 @@ class SFirebaseAuthLogin {
         password: password,
       );
       print('Login successful: ${userCredential.user?.email}');
-      return LoginResult(success: true);
+      return ResponsAuthResult(success: true);
     } on FirebaseAuthException catch (e) {
       String errorMessage;
       if (e.code == 'user-not-found') {
@@ -31,7 +31,7 @@ class SFirebaseAuthLogin {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(errorMessage)),
       );
-      return LoginResult(success: false, message: errorMessage);
+      return ResponsAuthResult(success: false, message: errorMessage);
     }
   }
 }

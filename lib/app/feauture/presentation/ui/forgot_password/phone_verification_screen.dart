@@ -7,7 +7,7 @@ import 'package:sitecycle/app/config/colors.dart';
 import 'package:sitecycle/app/config/dark_ligthmode.dart';
 import 'package:sitecycle/app/config/fontfamily_modal.dart';
 import 'package:sitecycle/app/config/images.dart';
-import 'package:sitecycle/app/feauture/presentation/ui/widgets/forgot_password.dart';
+import 'package:sitecycle/app/feauture/presentation/ui/forgot_password/forgot_password_screen.dart';
 
 
 

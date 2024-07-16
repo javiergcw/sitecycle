@@ -16,7 +16,7 @@ import 'package:sitecycle/app/config/list_modal.dart';
 import 'package:sitecycle/app/feauture/presentation/ui/login/login_screen.dart';
 import 'package:sitecycle/app/feauture/presentation/ui/pages/two_step_verification_screen.dart';
 import 'package:sitecycle/app/feauture/presentation/ui/register/register_screen.dart';
-import 'package:sitecycle/app/feauture/presentation/ui/widgets/phone_verification.dart';
+import 'package:sitecycle/app/feauture/presentation/ui/forgot_password/phone_verification_screen.dart';
 
 import '../mq.dart';
 

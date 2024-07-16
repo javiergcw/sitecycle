@@ -1,9 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:sitecycle/app/data/models/login_result.dart';
+import 'package:sitecycle/app/data/models/response_auth_result.dart';
 
 class SFirebaseAuthRegister {
-  static Future<LoginResult> register({
+  static Future<ResponsAuthResult> register({
     required BuildContext context,
     required String email,
     required String password,
@@ -21,7 +21,7 @@ class SFirebaseAuthRegister {
       await userCredential.user?.updateProfile(displayName: userName);
       
       print('Registration successful: ${userCredential.user?.email}');
-      return LoginResult(success: true);
+      return ResponsAuthResult(success: true);
     } on FirebaseAuthException catch (e) {
       String errorMessage;
       if (e.code == 'email-already-in-use') {
@@ -37,7 +37,7 @@ class SFirebaseAuthRegister {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(errorMessage)),
       );
-      return LoginResult(success: false, message: errorMessage);
+      return ResponsAuthResult(success: false, message: errorMessage);
     }
   }
 }
