@@ -10,7 +10,7 @@ import 'package:sitecycle/app/config/fontfamily_modal.dart';
 import 'package:sitecycle/app/config/images.dart';
 import 'package:sitecycle/app/config/list_modal.dart';
 import 'package:sitecycle/app/feauture/presentation/ui/drawer/drawer_main.dart';
-import 'package:sitecycle/app/feauture/presentation/ui/sign_up/sign_up_screen.dart';
+import 'package:sitecycle/app/feauture/presentation/ui/register/register_screen.dart';
 import 'package:sitecycle/app/feauture/presentation/ui/widgets/phone_verification.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';

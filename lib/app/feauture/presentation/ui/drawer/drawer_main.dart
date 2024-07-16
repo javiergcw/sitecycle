@@ -15,7 +15,7 @@ import 'package:sitecycle/app/config/images.dart';
 import 'package:sitecycle/app/config/list_modal.dart';
 import 'package:sitecycle/app/feauture/presentation/ui/login/login_screen.dart';
 import 'package:sitecycle/app/feauture/presentation/ui/pages/two_step_verification_screen.dart';
-import 'package:sitecycle/app/feauture/presentation/ui/sign_up/sign_up_screen.dart';
+import 'package:sitecycle/app/feauture/presentation/ui/register/register_screen.dart';
 import 'package:sitecycle/app/feauture/presentation/ui/widgets/phone_verification.dart';
 
 import '../mq.dart';
