@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:sitecycle/app/data/models/response_auth_result.dart';
 import 'package:sitecycle/app/service/firebase/auth/login.dart';
@@ -26,5 +27,30 @@ class CUFirebaseAuthLogin {
         SnackBar(content: Text(loginResult.message ?? 'Unknown error occurred')),
       );
     }
+  }
+  static Future<void> signInWithGoogle({
+    required BuildContext context,
+  }) async {
+    final User? user = await SFirebaseAuthLogin().signInWithGoogle();
+
+    if (user != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Login with Google successful!')),
+      );
+      Get.offAll(const DrawerMain());
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to sign in with Google.')),
+      );
+    }
+  }
+
+  static Future<void> signOut({
+    required BuildContext context,
+  }) async {
+    await SFirebaseAuthLogin().signOut();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Signed out successfully.')),
+    );
   }
 }

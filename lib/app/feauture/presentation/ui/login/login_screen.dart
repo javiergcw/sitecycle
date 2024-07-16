@@ -8,10 +8,10 @@ import 'package:sitecycle/app/config/dark_ligthmode.dart';
 import 'package:sitecycle/app/config/fontfamily_modal.dart';
 import 'package:sitecycle/app/config/images.dart';
 import 'package:sitecycle/app/config/list_modal.dart';
-import 'package:sitecycle/app/data/datasource/auth/google_auth.dart';
 import 'package:sitecycle/app/data/datasource/auth/login_case_use.dart';
 import 'package:sitecycle/app/feauture/presentation/ui/register/register_screen.dart';
 import 'package:sitecycle/app/feauture/presentation/ui/forgot_password/phone_verification_screen.dart';
+import 'package:sitecycle/app/service/firebase/auth/login.dart';
 import 'package:url_launcher/url_launcher.dart';
  // Importa el servicio de autenticación
 
@@ -60,13 +60,8 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _loginWithGoogle() async {
-    User? user = await AuthService().signInWithGoogle();
-    if (user != null) {
-      // Aquí puedes manejar la navegación después del inicio de sesión exitoso
-      print("Inicio de sesión exitoso: ${user.displayName}");
-    } else {
-      print("Error en el inicio de sesión");
-    }
+  await CUFirebaseAuthLogin.signInWithGoogle(context: context,);
+ 
   }
 
   @override
