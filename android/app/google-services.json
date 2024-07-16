@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "5216814524",
+    "project_id": "site-cycle-6340d",
+    "storage_bucket": "site-cycle-6340d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:5216814524:android:86ed1af5cfcbcd09be57b9",
+        "android_client_info": {
+          "package_name": "com.example.sitecycle"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDthhwmAS69eO04f_i1foM08gTHFarV-VU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
