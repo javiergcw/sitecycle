@@ -1,12 +1,15 @@
+// SFirebaseAuthRegister.dart
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:sitecycle/app/data/models/response_auth_result.dart';
+import 'package:sitecycle/app/data/utils/snackbar_verifications.dart';
 
 class SFirebaseAuthRegister {
-  static Future<ResponsAuthResult> register({
+  static Future<ResponseAuthResult> register({
     required BuildContext context,
     required String email,
     required String password,
+    required String confirmPassword,
     required String userName,
     required String mobileNumber,
   }) async {
@@ -19,25 +22,36 @@ class SFirebaseAuthRegister {
 
       // Actualiza el perfil del usuario con el nombre y el número de teléfono
       await userCredential.user?.updateProfile(displayName: userName);
-      
+
       print('Registration successful: ${userCredential.user?.email}');
-      return ResponsAuthResult(success: true);
+      return ResponseAuthResult(success: true);
     } on FirebaseAuthException catch (e) {
       String errorMessage;
       if (e.code == 'email-already-in-use') {
         errorMessage = 'Email already in use.';
-        print(errorMessage);
+      } else if (e.code == 'invalid-email') {
+        errorMessage = 'Email badly formatted.';
       } else if (e.code == 'weak-password') {
         errorMessage = 'Password is too weak.';
-        print(errorMessage);
       } else {
-        errorMessage = 'Registration failed: $e';
-        print(errorMessage);
+        errorMessage = 'Registration failed: Please contact support team.';
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMessage)),
+      SnackbarHelper.showSnackbar(
+        title: 'Error',
+        message: errorMessage,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
       );
-      return ResponsAuthResult(success: false, message: errorMessage);
+      return ResponseAuthResult(success: false, message: errorMessage);
+    } catch (e) {
+      String errorMessage = 'Registration failed: An unknown error occurred.';
+      SnackbarHelper.showSnackbar(
+        title: 'Error',
+        message: errorMessage,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      return ResponseAuthResult(success: false, message: errorMessage);
     }
   }
 }

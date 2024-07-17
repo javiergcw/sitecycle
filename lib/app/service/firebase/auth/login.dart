@@ -7,7 +7,7 @@ class SFirebaseAuthLogin {
   static final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
-  static Future<ResponsAuthResult> login({
+  static Future<ResponseAuthResult> login({
     required BuildContext context,
     required String email,
     required String password,
@@ -18,23 +18,16 @@ class SFirebaseAuthLogin {
         password: password,
       );
       print('Login successful: ${userCredential.user?.email}');
-      return ResponsAuthResult(success: true);
+      return ResponseAuthResult(success: true);
     } on FirebaseAuthException catch (e) {
       String errorMessage;
-      if (e.code == 'user-not-found') {
-        errorMessage = 'No user found for that email.';
-        print(errorMessage);
-      } else if (e.code == 'wrong-password') {
-        errorMessage = 'Wrong password provided.';
-        print(errorMessage);
+      if (e.code == 'invalid-credential') {
+        errorMessage = 'User/Password invalid';
       } else {
         errorMessage = 'Login failed: $e';
-        print(errorMessage);
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMessage)),
-      );
-      return ResponsAuthResult(success: false, message: errorMessage);
+
+      return ResponseAuthResult(success: false, message: errorMessage);
     }
   }
 
@@ -42,15 +35,16 @@ class SFirebaseAuthLogin {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
-        // El usuario canceló el inicio de sesión
         return null;
       }
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
       final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
-      final UserCredential userCredential = await _auth.signInWithCredential(credential);
+      final UserCredential userCredential =
+          await _auth.signInWithCredential(credential);
       return userCredential.user;
     } catch (e) {
       print(e.toString());
@@ -63,48 +57,42 @@ class SFirebaseAuthLogin {
     await _auth.signOut();
   }
 
+  // Método para iniciar sesión con número de teléfono
   static Future<void> signInWithPhone({
     required BuildContext context,
     required String phoneNumber,
     required Function(String verificationId) codeSentCallback,
+    required Function(ResponseAuthResult result) onCompleted,
   }) async {
     try {
       await _auth.verifyPhoneNumber(
         phoneNumber: phoneNumber,
         verificationCompleted: (PhoneAuthCredential credential) async {
           await _auth.signInWithCredential(credential);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Phone number automatically verified and user signed in: ${_auth.currentUser?.phoneNumber}')),
-          );
+          onCompleted(ResponseAuthResult(success: true, message: 'Phone number automatically verified and user signed in.'));
         },
         verificationFailed: (FirebaseAuthException e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Phone number verification failed. Code: ${e.code}. Message: ${e.message}')),
-          );
+          String message = 'Phone number verification failed. Error: ${e.message}';
+          onCompleted(ResponseAuthResult(success: false, message: message));
         },
         codeSent: (String verificationId, int? resendToken) {
           codeSentCallback(verificationId);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please check your phone for the verification code.')),
-          );
         },
         codeAutoRetrievalTimeout: (String verificationId) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Verification code timeout. Please try again.')),
-          );
+          // El tiempo de espera para la recuperación automática del código ha expirado
         },
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to Verify Phone Number: $e')),
-      );
+      onCompleted(ResponseAuthResult(success: false, message: e.toString()));
     }
   }
 
+  // Método para verificar el código SMS
   static Future<void> verifySmsCode({
     required BuildContext context,
     required String verificationId,
     required String smsCode,
+    required Function(ResponseAuthResult result) onCompleted,
   }) async {
     try {
       final AuthCredential credential = PhoneAuthProvider.credential(
@@ -112,35 +100,28 @@ class SFirebaseAuthLogin {
         smsCode: smsCode,
       );
       await _auth.signInWithCredential(credential);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Phone number verified and user signed in: ${_auth.currentUser?.phoneNumber}')),
-      );
+      onCompleted(ResponseAuthResult(success: true, message: 'Phone number verified and user signed in.'));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to sign in: $e')),
-      );
+      onCompleted(ResponseAuthResult(success: false, message: 'Failed to sign in. Error: invalid verification code'));
     }
   }
 
   static Future<void> resetPassword({
     required BuildContext context,
     required String email,
+    required Function(ResponseAuthResult result) onCompleted,
   }) async {
     try {
       await _auth.sendPasswordResetEmail(email: email);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Password reset email sent!')),
-      );
+      onCompleted(ResponseAuthResult(success: true, message: 'Password reset email sent!'));
     } on FirebaseAuthException catch (e) {
       String errorMessage;
       if (e.code == 'user-not-found') {
         errorMessage = 'No user found for that email.';
       } else {
-        errorMessage = 'Failed to send password reset email: ${e.message}';
+        errorMessage = 'Failed to send password reset email.';
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMessage)),
-      );
+      onCompleted(ResponseAuthResult(success: false, message: errorMessage));
     }
   }
 }

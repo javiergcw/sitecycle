@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
@@ -22,6 +23,7 @@ class _PhoneVerificationState extends State<PhoneVerification> {
   String? _verificationId;
   String _otpCode = '';
   bool _codeSent = false;
+  bool isLoading = false;
 
   Future<void> _sendCode() async {
     await CUFirebaseAuthLogin.signInWithPhone(
@@ -36,7 +38,10 @@ class _PhoneVerificationState extends State<PhoneVerification> {
     );
   }
 
-  Future<void> _verifyCode() async {
+Future<void> _verifyCode() async {
+    setState(() {
+      isLoading = true;
+    });
     if (_verificationId != null) {
       await CUFirebaseAuthLogin.verifySmsCode(
         context: context,
@@ -44,21 +49,38 @@ class _PhoneVerificationState extends State<PhoneVerification> {
         smsCode: _otpCode,
       );
     }
+    setState(() {
+      isLoading = false;
+    });
   }
 
-  @override
+ @override
   Widget build(BuildContext context) {
     notifire = Provider.of(context, listen: true);
     return Scaffold(
       backgroundColor: notifire.getBgColor,
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          return constraints.maxWidth < 900
-              ? phoneverify1(constraints)
-              : constraints.maxWidth < 1450
-                  ? phoneverify2(constraints)
-                  : phoneverify3(constraints);
-        },
+      body: Stack(
+        children: [
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return constraints.maxWidth < 900
+                  ? phoneverify1(constraints)
+                  : constraints.maxWidth < 1450
+                      ? phoneverify2(constraints)
+                      : phoneverify3(constraints);
+            },
+          ),
+          if (isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.5),
+              child: const Center(
+                child: SpinKitFadingCircle(
+                  color: Colors.white,
+                  size: 50.0,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

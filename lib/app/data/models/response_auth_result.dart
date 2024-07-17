@@ -1,6 +1,9 @@
-class ResponsAuthResult {
+class ResponseAuthResult {
   final bool success;
   final String? message;
 
-  ResponsAuthResult({required this.success, this.message});
+  ResponseAuthResult({
+    required this.success,
+    this.message,
+  });
 }

@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:sitecycle/app/data/models/response_auth_result.dart';
+import 'package:sitecycle/app/data/utils/snackbar_verifications.dart';
 import 'package:sitecycle/app/service/firebase/auth/login.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/get_navigation.dart';
@@ -12,19 +13,22 @@ class CUFirebaseAuthLogin {
     required String email,
     required String password,
   }) async {
-    final ResponsAuthResult loginResult = await SFirebaseAuthLogin.login(
+    final ResponseAuthResult loginResult = await SFirebaseAuthLogin.login(
       context: context,
       email: email,
       password: password,
     );
     if (loginResult.success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Login successful!')),
+      SnackbarHelper.showSnackbar(
+        title: 'Success',
+        message: 'Login successful!',
+        backgroundColor: Colors.green,
       );
       Get.offAll(const DrawerMain());
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(loginResult.message ?? 'Unknown error occurred')),
+      SnackbarHelper.showSnackbar(
+        title: 'Error',
+        message: loginResult.message ?? 'Unknown error occurred',
       );
     }
   }
@@ -35,13 +39,16 @@ class CUFirebaseAuthLogin {
     final User? user = await SFirebaseAuthLogin().signInWithGoogle();
 
     if (user != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Login with Google successful!')),
+      SnackbarHelper.showSnackbar(
+        title: 'Success',
+        message: 'Login with Google successful!',
+        backgroundColor: Colors.green,
       );
       Get.offAll(const DrawerMain());
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to sign in with Google.')),
+      SnackbarHelper.showSnackbar(
+        title: 'Error',
+        message: 'Failed to sign in with Google.',
       );
     }
   }
@@ -55,6 +62,14 @@ class CUFirebaseAuthLogin {
       context: context,
       phoneNumber: phoneNumber,
       codeSentCallback: codeSentCallback,
+      onCompleted: (ResponseAuthResult result) {
+        if (!result.success) {
+          SnackbarHelper.showSnackbar(
+            title: 'Error',
+            message: result.message ?? 'Unknown error occurred during phone sign-in',
+          );
+        }
+      },
     );
   }
 
@@ -67,18 +82,22 @@ class CUFirebaseAuthLogin {
       context: context,
       verificationId: verificationId,
       smsCode: smsCode,
+      onCompleted: (ResponseAuthResult result) {
+        if (result.success) {
+          SnackbarHelper.showSnackbar(
+            title: 'Success',
+            message: 'Phone verification successful!',
+            backgroundColor: Colors.green,
+          );
+          Get.offAll(const DrawerMain());
+        } else {
+          SnackbarHelper.showSnackbar(
+            title: 'Error',
+            message: result.message ?? 'Failed to verify phone number.',
+          );
+        }
+      },
     );
-
-    if (FirebaseAuth.instance.currentUser != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Phone verification successful!')),
-      );
-      Get.offAll(const DrawerMain());
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to verify phone number.')),
-      );
-    }
   }
 
   static Future<void> resetPassword({
@@ -88,6 +107,20 @@ class CUFirebaseAuthLogin {
     await SFirebaseAuthLogin.resetPassword(
       context: context,
       email: email,
+      onCompleted: (ResponseAuthResult result) {
+        if (result.success) {
+          SnackbarHelper.showSnackbar(
+            title: 'Success',
+            message: result.message ?? 'Password reset email sent!',
+            backgroundColor: Colors.green,
+          );
+        } else {
+          SnackbarHelper.showSnackbar(
+            title: 'Error',
+            message: result.message ?? 'Failed to send password reset email.',
+          );
+        }
+      },
     );
   }
 
@@ -95,8 +128,10 @@ class CUFirebaseAuthLogin {
     required BuildContext context,
   }) async {
     await SFirebaseAuthLogin().signOut();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Signed out successfully.')),
+    SnackbarHelper.showSnackbar(
+      title: 'Success',
+      message: 'Signed out successfully.',
+      backgroundColor: Colors.green,
     );
   }
 }

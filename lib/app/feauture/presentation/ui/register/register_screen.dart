@@ -7,11 +7,13 @@ import 'package:sitecycle/app/config/dark_ligthmode.dart';
 import 'package:sitecycle/app/config/fontfamily_modal.dart';
 import 'package:sitecycle/app/config/images.dart';
 import 'package:sitecycle/app/config/list_modal.dart';
+import 'package:sitecycle/app/data/datasource/auth/login_case_use.dart';
 import 'package:sitecycle/app/data/datasource/auth/register_case_use.dart';
-import 'package:sitecycle/app/feauture/presentation/ui/drawer/drawer_main.dart';
+import 'package:sitecycle/app/data/utils/snackbar_verifications.dart';
 import 'package:sitecycle/app/feauture/presentation/ui/login/login_screen.dart';
-import 'package:sitecycle/app/service/firebase/auth/register.dart';
+import 'package:sitecycle/app/feauture/presentation/ui/login/phone_verification_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -25,36 +27,143 @@ class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _mobileNumberController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+  final FocusNode _userNameFocusNode = FocusNode();
+  final FocusNode _emailFocusNode = FocusNode();
+  final FocusNode _mobileNumberFocusNode = FocusNode();
+  final FocusNode _passwordFocusNode = FocusNode();
+  final FocusNode _confirmPasswordFocusNode = FocusNode();
+
   late ColorNotifire notifire;
 
   bool isChecked = false;
   bool passwordVisible = true;
+  bool isLoading = false;
 
   List socialName = [
     'Google',
-    'Facebook',
-    'Discord',
+    'Phone',
+    'Apple',
   ];
 
   List social = [
     Appcontent.google,
-    Appcontent.facebook,
-    Appcontent.discord,
+    Appcontent.phoneIcon,
+    Appcontent.apple,
   ];
+
+  void showLoadingOverlay(BuildContext context) {
+    setState(() {
+      isLoading = true;
+    });
+  }
+
+  void hideLoadingOverlay() {
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  void _register() async {
+    if (_userNameController.text.isEmpty ||
+        _emailController.text.isEmpty ||
+        _mobileNumberController.text.isEmpty ||
+        _passwordController.text.isEmpty ||
+        _confirmPasswordController.text.isEmpty) {
+      SnackbarHelper.showSnackbar(
+        title: 'Error',
+        message: 'Please fill all fields',
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      return;
+    }
+
+    if (_passwordController.text != _confirmPasswordController.text) {
+      SnackbarHelper.showSnackbar(
+        title: 'Error',
+        message: 'Passwords do not match',
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      return;
+    }
+
+    if (!isChecked) {
+      SnackbarHelper.showSnackbar(
+        title: 'Error',
+        message: 'You must accept the Terms and Conditions',
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      return;
+    }
+
+    showLoadingOverlay(context);
+    await CUFirebaseAuthRegister.register(
+      context: context,
+      email: _emailController.text,
+      password: _passwordController.text,
+      confirmPassword: _confirmPasswordController.text,
+      userName: _userNameController.text,
+      mobileNumber: _mobileNumberController.text,
+    );
+    hideLoadingOverlay();
+  }
+
+  Future<void> _loginWithGoogle() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    await CUFirebaseAuthLogin.signInWithGoogle(context: context);
+
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  Future<void> navigateTo(Widget screen) async {
+    setState(() {
+      isLoading = true;
+    });
+
+    await Future.delayed(const Duration(seconds: 2));
+
+    setState(() {
+      isLoading = false;
+    });
+
+    Get.to(screen);
+  }
 
   @override
   Widget build(BuildContext context) {
     notifire = Provider.of(context, listen: true);
     return Scaffold(
       backgroundColor: notifire.getBgColor,
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          return constraints.maxWidth < 870
-              ? signup2(constraints)
-              : constraints.maxWidth < 1328
-                  ? signup1(constraints)
-                  : signup(constraints);
-        },
+      body: Stack(
+        children: [
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return constraints.maxWidth < 870
+                  ? signup2(constraints)
+                  : constraints.maxWidth < 1328
+                      ? signup1(constraints)
+                      : signup(constraints);
+            },
+          ),
+          if (isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.5),
+              child: const Center(
+                child: SpinKitFadingCircle(
+                  color: Colors.white,
+                  size: 50.0,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -103,18 +212,26 @@ class _SignupScreenState extends State<SignupScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 30),
-                    Text('User Name'.tr,
-                        style: TextStyle(
-                            fontSize: 16,
-                            color: notifire.getContainer,
-                            fontFamily: FontFamily.qBold)),
+                    Text(
+                      'User Name'.tr,
+                      style: TextStyle(
+                          fontSize: 18,
+                          color: notifire.getContainer,
+                          fontFamily: FontFamily.qBold),
+                    ),
                     Container(
                       width: Get.width * 0.25,
                       height: 45,
                       margin: const EdgeInsets.symmetric(vertical: 13),
                       child: TextField(
                         controller: _userNameController,
+                        focusNode: _userNameFocusNode,
                         keyboardType: TextInputType.name,
+                        textInputAction: TextInputAction.next,
+                        onSubmitted: (_) {
+                          _userNameFocusNode.unfocus();
+                          FocusScope.of(context).requestFocus(_emailFocusNode);
+                        },
                         style: TextStyle(
                             fontSize: 14,
                             color: notifire.getContainer,
@@ -123,7 +240,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         decoration: InputDecoration(
                           hintText: 'User Name'.tr,
                           prefixIcon: Padding(
-                            padding: const EdgeInsets.all(8.0),
+                            padding: const EdgeInsets.all(12),
                             child: SvgPicture.asset(
                               Appcontent.userIcon,
                               colorFilter: const ColorFilter.mode(
@@ -132,7 +249,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           ),
                           hintStyle: const TextStyle(
                               color: Colors.grey,
-                              fontSize: 15,
+                              fontSize: 11,
                               fontFamily: FontFamily.qRegular),
                           contentPadding:
                               const EdgeInsets.only(left: 20, right: 20),
@@ -149,18 +266,27 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                       ),
                     ),
-                    Text('Your Email'.tr,
-                        style: TextStyle(
-                            fontSize: 16,
-                            color: notifire.getContainer,
-                            fontFamily: FontFamily.qBold)),
+                    Text(
+                      'Your Email'.tr,
+                      style: TextStyle(
+                          fontSize: 18,
+                          color: notifire.getContainer,
+                          fontFamily: FontFamily.qBold),
+                    ),
                     Container(
                       width: Get.width * 0.25,
                       height: 45,
                       margin: const EdgeInsets.symmetric(vertical: 13),
                       child: TextField(
                         controller: _emailController,
+                        focusNode: _emailFocusNode,
                         keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        onSubmitted: (_) {
+                          _emailFocusNode.unfocus();
+                          FocusScope.of(context)
+                              .requestFocus(_mobileNumberFocusNode);
+                        },
                         style: TextStyle(
                             fontSize: 14,
                             color: notifire.getContainer,
@@ -189,18 +315,27 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                       ),
                     ),
-                    Text('Mobile Number'.tr,
-                        style: TextStyle(
-                            fontSize: 16,
-                            color: notifire.getContainer,
-                            fontFamily: FontFamily.qBold)),
+                    Text(
+                      'Mobile Number'.tr,
+                      style: TextStyle(
+                          fontSize: 18,
+                          color: notifire.getContainer,
+                          fontFamily: FontFamily.qBold),
+                    ),
                     Container(
                       width: Get.width * 0.25,
                       height: 45,
                       margin: const EdgeInsets.symmetric(vertical: 13),
                       child: TextField(
                         controller: _mobileNumberController,
+                        focusNode: _mobileNumberFocusNode,
                         keyboardType: TextInputType.phone,
+                        textInputAction: TextInputAction.next,
+                        onSubmitted: (_) {
+                          _mobileNumberFocusNode.unfocus();
+                          FocusScope.of(context)
+                              .requestFocus(_passwordFocusNode);
+                        },
                         style: TextStyle(
                             fontSize: 14,
                             color: notifire.getContainer,
@@ -209,13 +344,74 @@ class _SignupScreenState extends State<SignupScreen> {
                         decoration: InputDecoration(
                           hintText: 'Mobile Number'.tr,
                           prefixIcon: Padding(
-                            padding: const EdgeInsets.all(8.0),
+                            padding: const EdgeInsets.all(12),
                             child: SvgPicture.asset(
                               Appcontent.phone,
                               colorFilter: const ColorFilter.mode(
                                   Color(0xff9DA2A7), BlendMode.srcIn),
                             ),
                           ),
+                          hintStyle: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 11,
+                              fontFamily: FontFamily.qRegular),
+                          contentPadding:
+                              const EdgeInsets.only(left: 20, right: 20),
+                          filled: true,
+                          fillColor: notifire.getContentColor,
+                          focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(color: blue),
+                              borderRadius:
+                                  const BorderRadius.all(Radius.circular(12))),
+                          border: const OutlineInputBorder(
+                              borderSide: BorderSide.none,
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(12))),
+                        ),
+                      ),
+                    ),
+                    Text(
+                      'Password'.tr,
+                      style: TextStyle(
+                          fontSize: 18,
+                          color: notifire.getContainer,
+                          fontFamily: FontFamily.qBold),
+                    ),
+                    Container(
+                      width: Get.width * 0.25,
+                      height: 45,
+                      margin: const EdgeInsets.symmetric(vertical: 13),
+                      child: TextField(
+                        controller: _passwordController,
+                        focusNode: _passwordFocusNode,
+                        keyboardType: TextInputType.text,
+                        textInputAction: TextInputAction.next,
+                        onSubmitted: (_) {
+                          _passwordFocusNode.unfocus();
+                          FocusScope.of(context)
+                              .requestFocus(_confirmPasswordFocusNode);
+                        },
+                        style: TextStyle(
+                            fontSize: 14,
+                            color: notifire.getContainer,
+                            fontFamily: FontFamily.qRegular,
+                            fontWeight: FontWeight.w700),
+                        obscureText: passwordVisible,
+                        decoration: InputDecoration(
+                          hintText: 'Password'.tr,
+                          suffixIcon: InkWell(
+                              onTap: () {
+                                setState(() {
+                                  passwordVisible = !passwordVisible;
+                                });
+                              },
+                              child: Icon(
+                                  passwordVisible
+                                      ? Icons.visibility
+                                      : Icons.visibility_off,
+                                  color: Colors.grey)),
+                          prefixIcon: Image.asset(Appcontent.password,
+                              scale: 3, color: const Color(0xff9DA2A7)),
                           hintStyle: const TextStyle(
                               color: Colors.grey,
                               fontSize: 15,
@@ -235,17 +431,26 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                       ),
                     ),
-                    Text('Password'.tr,
-                        style: TextStyle(
-                            fontSize: 16,
-                            color: notifire.getContainer,
-                            fontFamily: FontFamily.qBold)),
+                    Text(
+                      'Confirm Password'.tr,
+                      style: TextStyle(
+                          fontSize: 18,
+                          color: notifire.getContainer,
+                          fontFamily: FontFamily.qBold),
+                    ),
                     Container(
                       width: Get.width * 0.25,
                       height: 45,
                       margin: const EdgeInsets.symmetric(vertical: 13),
                       child: TextField(
-                        controller: _passwordController,
+                        controller: _confirmPasswordController,
+                        focusNode: _confirmPasswordFocusNode,
+                        keyboardType: TextInputType.text,
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) {
+                          _confirmPasswordFocusNode.unfocus();
+                          _register();
+                        },
                         style: TextStyle(
                             fontSize: 14,
                             color: notifire.getContainer,
@@ -253,20 +458,18 @@ class _SignupScreenState extends State<SignupScreen> {
                             fontWeight: FontWeight.w700),
                         obscureText: passwordVisible,
                         decoration: InputDecoration(
-                          hintText: 'Password'.tr,
+                          hintText: 'Confirm Password'.tr,
                           suffixIcon: InkWell(
-                            onTap: () {
-                              setState(() {
-                                passwordVisible = !passwordVisible;
-                              });
-                            },
-                            child: Icon(
-                              passwordVisible
-                                  ? Icons.visibility
-                                  : Icons.visibility_off,
-                              color: Colors.grey,
-                            ),
-                          ),
+                              onTap: () {
+                                setState(() {
+                                  passwordVisible = !passwordVisible;
+                                });
+                              },
+                              child: Icon(
+                                  passwordVisible
+                                      ? Icons.visibility
+                                      : Icons.visibility_off,
+                                  color: Colors.grey)),
                           prefixIcon: Image.asset(Appcontent.password,
                               scale: 3, color: const Color(0xff9DA2A7)),
                           hintStyle: const TextStyle(
@@ -289,46 +492,33 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                     ),
                     SizedBox(
-                      child: StreamBuilder<Object>(
-                        stream: null,
-                        builder: (context, snapshot) {
-                          return Row(
-                            children: [
-                              Checkbox(
-                                checkColor: notifire.getBgColor,
-                                fillColor: WidgetStatePropertyAll(
-                                    notifire.getContainer),
-                                activeColor: notifire.getContainer,
-                                value: isChecked,
-                                onChanged: (bool? value) {
-                                  setState(() {
-                                    isChecked = value!;
-                                  });
-                                },
-                              ),
-                              Text(
-                                'Keep me signed in'.tr,
-                                style: TextStyle(
-                                    fontSize: 15,
-                                    color: notifire.getContainer,
-                                    fontFamily: FontFamily.qBold,
-                                    fontWeight: FontWeight.w600),
-                              ),
-                            ],
-                          );
-                        },
+                      width: Get.width * 0.25,
+                      child: Row(
+                        children: [
+                          Checkbox(
+                            checkColor: notifire.getBgColor,
+                            fillColor: MaterialStateProperty.all(notifire.getContainer),
+                            activeColor: notifire.getContainer,
+                            value: isChecked,
+                            onChanged: (bool? value) {
+                              setState(() {
+                                isChecked = value!;
+                              });
+                            },
+                          ),
+                          Text(
+                            'I accept the Terms and Conditions'.tr,
+                            style: TextStyle(
+                                fontSize: 15,
+                                color: notifire.getContainer,
+                                fontFamily: FontFamily.qBold,
+                                fontWeight: FontWeight.w600),
+                          ),
+                        ],
                       ),
                     ),
                     InkWell(
-                      onTap: () async {
-                        await CUFirebaseAuthRegister.register(
-                          context: context,
-                          email: _emailController.text,
-                          password: _passwordController.text,
-                          userName: _userNameController.text,
-                          mobileNumber: _mobileNumberController.text,
-                        );
-                      },
+                      onTap: _register,
                       child: Container(
                         height: 42,
                         width: Get.width * 0.25,
@@ -367,7 +557,11 @@ class _SignupScreenState extends State<SignupScreen> {
                             children: [
                               InkWell(
                                 onTap: () async {
-                                  if (!await launchUrl(modal().urlList[index])) {
+                                  if (socialName[index] == 'Google') {
+                                    await _loginWithGoogle();
+                                  } else if (socialName[index] == 'Phone') {
+                                    navigateTo(const PhoneVerification());
+                                  } else if (!await launchUrl(modal().urlList[index])) {
                                     throw Exception(
                                         'Could not launch ${modal().urlList[index]}');
                                   }
@@ -413,7 +607,9 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                         InkWell(
                             onTap: () {
+                              showLoadingOverlay(context);
                               Get.to(const LoginScreen());
+                              hideLoadingOverlay();
                             },
                             child: Text(" Log In".tr,
                                 style: TextStyle(
@@ -533,6 +729,8 @@ class _SignupScreenState extends State<SignupScreen> {
                     child: TextField(
                       controller: _userNameController,
                       keyboardType: TextInputType.name,
+                      textInputAction: TextInputAction.next,
+                      onSubmitted: (_) => FocusScope.of(context).nextFocus(),
                       style: TextStyle(fontSize: 11, color: notifire.getContainer, fontFamily: FontFamily.qRegular, fontWeight: FontWeight.w700),
                       decoration: InputDecoration(
                         hintText: 'User Name'.tr,
@@ -558,6 +756,8 @@ class _SignupScreenState extends State<SignupScreen> {
                     child: TextField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      onSubmitted: (_) => FocusScope.of(context).nextFocus(),
                       style: TextStyle(fontSize: 11, color: notifire.getContainer, fontFamily: FontFamily.qRegular, fontWeight: FontWeight.w700),
                       decoration: InputDecoration(
                         hintText: 'Your Email'.tr,
@@ -583,6 +783,8 @@ class _SignupScreenState extends State<SignupScreen> {
                     child: TextField(
                       controller: _mobileNumberController,
                       keyboardType: TextInputType.phone,
+                      textInputAction: TextInputAction.next,
+                      onSubmitted: (_) => FocusScope.of(context).nextFocus(),
                       style: TextStyle(fontSize: 11, color: notifire.getContainer, fontFamily: FontFamily.qRegular, fontWeight: FontWeight.w700),
                       decoration: InputDecoration(
                         hintText: 'Mobile Number'.tr,
@@ -607,6 +809,8 @@ class _SignupScreenState extends State<SignupScreen> {
                     margin: const EdgeInsets.symmetric(vertical: 13),
                     child: TextField(
                       controller: _passwordController,
+                      textInputAction: TextInputAction.next,
+                      onSubmitted: (_) => FocusScope.of(context).nextFocus(),
                       style: TextStyle(fontSize: 11, color: notifire.getContainer, fontFamily: FontFamily.qRegular, fontWeight: FontWeight.w700),
                       obscureText: passwordVisible,
                       decoration: InputDecoration(
@@ -635,51 +839,64 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                   ),
 
+                  Text('Confirm Password'.tr, style: TextStyle(fontSize: 11, color: notifire.getContainer, fontFamily: FontFamily.qBold)),
+                  Container(
+                    width: constraints.maxWidth < 990 ? Get.width * 0.30 : Get.width * 0.25,
+                    height: 45,
+                    margin: const EdgeInsets.symmetric(vertical: 13),
+                    child: TextField(
+                      controller: _confirmPasswordController,
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => _register(),
+                      style: TextStyle(fontSize: 11, color: notifire.getContainer, fontFamily: FontFamily.qRegular, fontWeight: FontWeight.w700),
+                      obscureText: passwordVisible,
+                      decoration: InputDecoration(
+                        hintText: 'Confirm Password'.tr,
+                        suffixIcon: InkWell(
+                          onTap: () {
+                            setState(() {
+                              passwordVisible = !passwordVisible;
+                            });
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(14),
+                            child: Icon(passwordVisible ? Icons.visibility : Icons.visibility_off, color: Colors.grey, ),
+                          )),
+                        prefixIcon: Padding(
+                          padding: const EdgeInsets.all(14),
+                          child: Image.asset(Appcontent.password, scale: 3, color: const Color(0xff9DA2A7)),
+                        ),
+                        hintStyle: const TextStyle(color: Colors.grey, fontSize: 11, fontFamily: FontFamily.qRegular),
+                        contentPadding: const EdgeInsets.only(left: 20, right: 20),
+                        filled: true,
+                        fillColor: notifire.getContentColor,
+                        focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: blue), borderRadius: const BorderRadius.all(Radius.circular(12))),
+                        border: const OutlineInputBorder(borderSide: BorderSide.none, borderRadius: BorderRadius.all(Radius.circular(12))),
+                      ),
+                    ),
+                  ),
+
                   SizedBox(
-                    child: StreamBuilder<Object>(
-                      stream: null,
-                      builder: (context, snapshot) {
-                        return Row(
-                          children: [
-                            Checkbox(
-                              checkColor: notifire.getBgColor,
-                              fillColor: WidgetStatePropertyAll(notifire.getContainer),
-                              activeColor: notifire.getContainer,
-                              value: isChecked,
-                              onChanged: (bool? value) {
-                                setState(() {
-                                  isChecked = value!;
-                                });
-                              },
-                            ),
-                            Text('Keep me signed in'.tr, style: TextStyle(fontSize: 10, color: notifire.getContainer, fontFamily: FontFamily.qBold, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis,),
-                          ],
-                        );
-                      }
+                    child: Row(
+                      children: [
+                        Checkbox(
+                          checkColor: notifire.getBgColor,
+                          fillColor: MaterialStateProperty.all(notifire.getContainer),
+                          activeColor: notifire.getContainer,
+                          value: isChecked,
+                          onChanged: (bool? value) {
+                            setState(() {
+                              isChecked = value!;
+                            });
+                          },
+                        ),
+                        Text('I accept the Terms and Conditions'.tr, style: TextStyle(fontSize: 10, color: notifire.getContainer, fontFamily: FontFamily.qBold, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis,),
+                      ],
                     ),
                   ),
 
                   InkWell(
-                    onTap: () async {
-                      final result = await SFirebaseAuthRegister.register(
-                        context: context,
-                        email: _emailController.text,
-                        password: _passwordController.text,
-                        userName: _userNameController.text,
-                        mobileNumber: _mobileNumberController.text,
-                      );
-
-                      if (result.success) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Registration successful!')),
-                        );
-                        Get.to(const DrawerMain());
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(result.message ?? 'Unknown error occurred')),
-                        );
-                      }
-                    },
+                    onTap: _register,
                     child: Container(
                       height: 42,
                       width: constraints.maxWidth < 990 ? Get.width * 0.30 : Get.width * 0.25,
@@ -707,7 +924,11 @@ class _SignupScreenState extends State<SignupScreen> {
                           children: [
                             InkWell(
                               onTap: () async {
-                                if (!await launchUrl(modal().urlList[index])) {
+                                if (socialName[index] == 'Google') {
+                                  await _loginWithGoogle();
+                                } else if (socialName[index] == 'Phone') {
+                                  navigateTo(const PhoneVerification());
+                                } else if (!await launchUrl(modal().urlList[index])) {
                                   throw Exception('Could not launch ${modal().urlList[index]}');
                                 }
                               },
@@ -739,7 +960,9 @@ class _SignupScreenState extends State<SignupScreen> {
                       Text("Already registered?".tr, style: const TextStyle(color: Colors.grey, fontSize: 18, fontFamily: FontFamily.qBold, fontWeight: FontWeight.w700), overflow: TextOverflow.ellipsis,),
                       InkWell(
                         onTap: () {
+                          showLoadingOverlay(context);
                           Get.to(const LoginScreen());
+                          hideLoadingOverlay();
                         },
                         child: Text(" Log In".tr, style: TextStyle(color: notifire.getContainer, fontSize: 18, fontFamily: FontFamily.qBold, fontWeight: FontWeight.w700), overflow: TextOverflow.ellipsis,)),
                     ],
@@ -826,22 +1049,43 @@ class _SignupScreenState extends State<SignupScreen> {
                   margin: const EdgeInsets.symmetric(vertical: 13),
                   child: TextField(
                     controller: _userNameController,
+                    focusNode: _userNameFocusNode,
                     keyboardType: TextInputType.name,
-                    style: TextStyle(fontSize: 11, color: notifire.getContainer, fontFamily: FontFamily.qRegular, fontWeight: FontWeight.w700),
+                    textInputAction: TextInputAction.next,
+                    onSubmitted: (_) {
+                      _userNameFocusNode.unfocus();
+                      FocusScope.of(context).requestFocus(_emailFocusNode);
+                    },
+                    style: TextStyle(
+                        fontSize: 14,
+                        color: notifire.getContainer,
+                        fontFamily: FontFamily.qRegular,
+                        fontWeight: FontWeight.w700),
                     decoration: InputDecoration(
                       hintText: 'User Name'.tr,
                       prefixIcon: Padding(
                         padding: const EdgeInsets.all(12),
-                        child: SvgPicture.asset(Appcontent.userIcon,
-                          colorFilter: const ColorFilter.mode(Color(0xff9DA2A7), BlendMode.srcIn),
+                        child: SvgPicture.asset(
+                          Appcontent.userIcon,
+                          colorFilter: const ColorFilter.mode(
+                              Color(0xff9DA2A7), BlendMode.srcIn),
                         ),
                       ),
-                      hintStyle: const TextStyle(color: Colors.grey, fontSize: 11, fontFamily: FontFamily.qRegular),
+                      hintStyle: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 11,
+                          fontFamily: FontFamily.qRegular),
                       contentPadding: const EdgeInsets.only(left: 20, right: 20),
                       filled: true,
                       fillColor: notifire.getContentColor,
-                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: blue), borderRadius: const BorderRadius.all(Radius.circular(12))),
-                      border: const OutlineInputBorder(borderSide: BorderSide.none, borderRadius: BorderRadius.all(Radius.circular(12))),
+                      focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: blue),
+                          borderRadius:
+                              const BorderRadius.all(Radius.circular(12))),
+                      border: const OutlineInputBorder(
+                          borderSide: BorderSide.none,
+                          borderRadius:
+                              BorderRadius.all(Radius.circular(12))),
                     ),
                   ),
                 ),
@@ -852,20 +1096,39 @@ class _SignupScreenState extends State<SignupScreen> {
                   margin: const EdgeInsets.symmetric(vertical: 13),
                   child: TextField(
                     controller: _emailController,
+                    focusNode: _emailFocusNode,
                     keyboardType: TextInputType.emailAddress,
-                    style: TextStyle(fontSize: 11, color: notifire.getContainer, fontFamily: FontFamily.qRegular, fontWeight: FontWeight.w700),
+                    textInputAction: TextInputAction.next,
+                    onSubmitted: (_) {
+                      _emailFocusNode.unfocus();
+                      FocusScope.of(context)
+                          .requestFocus(_mobileNumberFocusNode);
+                    },
+                    style: TextStyle(
+                        fontSize: 14,
+                        color: notifire.getContainer,
+                        fontFamily: FontFamily.qRegular,
+                        fontWeight: FontWeight.w700),
                     decoration: InputDecoration(
                       hintText: 'Your Email'.tr,
-                      prefixIcon: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Image.asset(Appcontent.email, color: const Color(0xff9DA2A7)),
-                      ),
-                      hintStyle: const TextStyle(color: Colors.grey, fontSize: 11, fontFamily: FontFamily.qRegular),
-                      contentPadding: const EdgeInsets.only(left: 20, right: 20),
+                      prefixIcon: Image.asset(Appcontent.email,
+                          scale: 3, color: const Color(0xff9DA2A7)),
+                      hintStyle: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 15,
+                          fontFamily: FontFamily.qRegular),
+                      contentPadding:
+                          const EdgeInsets.only(left: 20, right: 20),
                       filled: true,
                       fillColor: notifire.getContentColor,
-                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: blue), borderRadius: const BorderRadius.all(Radius.circular(12))),
-                      border: const OutlineInputBorder(borderSide: BorderSide.none, borderRadius: BorderRadius.all(Radius.circular(12))),
+                      focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: blue),
+                          borderRadius:
+                              const BorderRadius.all(Radius.circular(12))),
+                      border: const OutlineInputBorder(
+                          borderSide: BorderSide.none,
+                          borderRadius:
+                              BorderRadius.all(Radius.circular(12))),
                     ),
                   ),
                 ),
@@ -876,20 +1139,44 @@ class _SignupScreenState extends State<SignupScreen> {
                   margin: const EdgeInsets.symmetric(vertical: 13),
                   child: TextField(
                     controller: _mobileNumberController,
+                    focusNode: _mobileNumberFocusNode,
                     keyboardType: TextInputType.phone,
-                    style: TextStyle(fontSize: 11, color: notifire.getContainer, fontFamily: FontFamily.qRegular, fontWeight: FontWeight.w700),
+                    textInputAction: TextInputAction.next,
+                    onSubmitted: (_) {
+                      _mobileNumberFocusNode.unfocus();
+                      FocusScope.of(context)
+                          .requestFocus(_passwordFocusNode);
+                    },
+                    style: TextStyle(
+                        fontSize: 14,
+                        color: notifire.getContainer,
+                        fontFamily: FontFamily.qRegular,
+                        fontWeight: FontWeight.w700),
                     decoration: InputDecoration(
                       hintText: 'Mobile Number'.tr,
                       prefixIcon: Padding(
                         padding: const EdgeInsets.all(12),
-                        child: SvgPicture.asset(Appcontent.phone, colorFilter: const ColorFilter.mode(Color(0xff9DA2A7), BlendMode.srcIn),),
+                        child: SvgPicture.asset(
+                          Appcontent.phone,
+                          colorFilter: const ColorFilter.mode(
+                              Color(0xff9DA2A7), BlendMode.srcIn),
+                        ),
                       ),
-                      hintStyle: const TextStyle(color: Colors.grey, fontSize: 11, fontFamily: FontFamily.qRegular),
+                      hintStyle: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 11,
+                          fontFamily: FontFamily.qRegular),
                       contentPadding: const EdgeInsets.only(left: 20, right: 20),
                       filled: true,
                       fillColor: notifire.getContentColor,
-                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: blue), borderRadius: const BorderRadius.all(Radius.circular(12))),
-                      border: const OutlineInputBorder(borderSide: BorderSide.none, borderRadius: BorderRadius.all(Radius.circular(12))),
+                      focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: blue),
+                          borderRadius:
+                              const BorderRadius.all(Radius.circular(12))),
+                      border: const OutlineInputBorder(
+                          borderSide: BorderSide.none,
+                          borderRadius:
+                              BorderRadius.all(Radius.circular(12))),
                     ),
                   ),
                 ),
@@ -900,84 +1187,153 @@ class _SignupScreenState extends State<SignupScreen> {
                   margin: const EdgeInsets.symmetric(vertical: 13),
                   child: TextField(
                     controller: _passwordController,
-                    style: TextStyle(fontSize: 11, color: notifire.getContainer, fontFamily: FontFamily.qRegular, fontWeight: FontWeight.w700),
+                    focusNode: _passwordFocusNode,
+                    keyboardType: TextInputType.text,
+                    textInputAction: TextInputAction.next,
+                    onSubmitted: (_) {
+                      _passwordFocusNode.unfocus();
+                      FocusScope.of(context)
+                          .requestFocus(_confirmPasswordFocusNode);
+                    },
+                    style: TextStyle(
+                        fontSize: 14,
+                        color: notifire.getContainer,
+                        fontFamily: FontFamily.qRegular,
+                        fontWeight: FontWeight.w700),
                     obscureText: passwordVisible,
                     decoration: InputDecoration(
                       hintText: 'Password'.tr,
                       suffixIcon: InkWell(
-                        onTap: () {
-                          setState(() {
-                            passwordVisible = !passwordVisible;
-                          });
-                        },
-                        child: Icon(passwordVisible ? Icons.visibility : Icons.visibility_off, color: Colors.grey)),
-                      prefixIcon: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Image.asset(Appcontent.password, color: const Color(0xff9DA2A7)),
-                      ),
-                      hintStyle: const TextStyle(color: Colors.grey, fontSize: 11, fontFamily: FontFamily.qRegular),
-                      contentPadding: const EdgeInsets.only(left: 20, right: 20),
+                          onTap: () {
+                            setState(() {
+                              passwordVisible = !passwordVisible;
+                            });
+                          },
+                          child: Icon(
+                              passwordVisible
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                              color: Colors.grey)),
+                      prefixIcon: Image.asset(Appcontent.password,
+                          scale: 3, color: const Color(0xff9DA2A7)),
+                      hintStyle: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 15,
+                          fontFamily: FontFamily.qRegular),
+                      contentPadding:
+                          const EdgeInsets.only(left: 20, right: 20),
                       filled: true,
                       fillColor: notifire.getContentColor,
-                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: blue), borderRadius: const BorderRadius.all(Radius.circular(12))),
-                      border: const OutlineInputBorder(borderSide: BorderSide.none, borderRadius: BorderRadius.all(Radius.circular(12))),
+                      focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: blue),
+                          borderRadius:
+                              const BorderRadius.all(Radius.circular(12))),
+                      border: const OutlineInputBorder(
+                          borderSide: BorderSide.none,
+                          borderRadius:
+                              BorderRadius.all(Radius.circular(12))),
+                    ),
+                  ),
+                ),
+
+                Text('Confirm Password'.tr, style: TextStyle(fontSize: 14, color: notifire.getContainer, fontFamily: FontFamily.qBold)),
+                Container(
+                  height: 45,
+                  margin: const EdgeInsets.symmetric(vertical: 13),
+                  child: TextField(
+                    controller: _confirmPasswordController,
+                    focusNode: _confirmPasswordFocusNode,
+                    keyboardType: TextInputType.text,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) {
+                      _confirmPasswordFocusNode.unfocus();
+                      _register();
+                    },
+                    style: TextStyle(
+                        fontSize: 14,
+                        color: notifire.getContainer,
+                        fontFamily: FontFamily.qRegular,
+                        fontWeight: FontWeight.w700),
+                    obscureText: passwordVisible,
+                    decoration: InputDecoration(
+                      hintText: 'Confirm Password'.tr,
+                      suffixIcon: InkWell(
+                          onTap: () {
+                            setState(() {
+                              passwordVisible = !passwordVisible;
+                            });
+                          },
+                          child: Icon(
+                              passwordVisible
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                              color: Colors.grey)),
+                      prefixIcon: Image.asset(Appcontent.password,
+                          scale: 3, color: const Color(0xff9DA2A7)),
+                      hintStyle: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 15,
+                          fontFamily: FontFamily.qRegular),
+                      contentPadding:
+                          const EdgeInsets.only(left: 20, right: 20),
+                      filled: true,
+                      fillColor: notifire.getContentColor,
+                      focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: blue),
+                          borderRadius:
+                              const BorderRadius.all(Radius.circular(12))),
+                      border: const OutlineInputBorder(
+                          borderSide: BorderSide.none,
+                          borderRadius:
+                              BorderRadius.all(Radius.circular(12))),
                     ),
                   ),
                 ),
 
                 SizedBox(
-                  child: StreamBuilder<Object>(
-                      stream: null,
-                      builder: (context, snapshot) {
-                        return Row(
-                          children: [
-                            Checkbox(
-                              checkColor: notifire.getBgColor,
-                              fillColor: WidgetStatePropertyAll(notifire.getContainer),
-                              activeColor: notifire.getContainer,
-                              value: isChecked,
-                              onChanged: (bool? value) {
-                                setState(() {
-                                  isChecked = value!;
-                                });
-                              },
-                            ),
-                            Text('Keep me signed in'.tr, style: TextStyle(fontSize: 15, color: notifire.getContainer, fontFamily: FontFamily.qBold, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis,),
-                          ],
-                        );
-                      }
+                  width: Get.width * 0.25,
+                  child: Row(
+                    children: [
+                      Checkbox(
+                        checkColor: notifire.getBgColor,
+                        fillColor: MaterialStateProperty.all(notifire.getContainer),
+                        activeColor: notifire.getContainer,
+                        value: isChecked,
+                        onChanged: (bool? value) {
+                          setState(() {
+                            isChecked = value!;
+                          });
+                        },
+                      ),
+                      Text(
+                        'I accept the Terms and Conditions'.tr,
+                        style: TextStyle(
+                            fontSize: 15,
+                            color: notifire.getContainer,
+                            fontFamily: FontFamily.qBold,
+                            fontWeight: FontWeight.w600),
+                      ),
+                    ],
                   ),
                 ),
 
                 InkWell(
-                  onTap: () async {
-                    final result = await SFirebaseAuthRegister.register(
-                      context: context,
-                      email: _emailController.text,
-                      password: _passwordController.text,
-                      userName: _userNameController.text,
-                      mobileNumber: _mobileNumberController.text,
-                    );
-
-                    if (result.success) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Registration successful!')),
-                      );
-                      Get.to(const DrawerMain());
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(result.message ?? 'Unknown error occurred')),
-                      );
-                    }
-                  },
+                  onTap: _register,
                   child: Container(
                     height: 42,
+                    width: Get.width * 0.25,
                     margin: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
                       color: notifire.getContainer,
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: Center(child: Text('Sign Up'.tr, style: TextStyle(fontSize: 15, color: notifire.text, fontFamily: FontFamily.qBold, fontWeight: FontWeight.w700))),
+                    child: Center(
+                        child: Text('Sign Up'.tr,
+                            style: TextStyle(
+                                fontSize: 15,
+                                color: notifire.text,
+                                fontFamily: FontFamily.qBold,
+                                fontWeight: FontWeight.w700))),
                   ),
                 ),
 
@@ -996,13 +1352,17 @@ class _SignupScreenState extends State<SignupScreen> {
                         children: [
                           InkWell(
                             onTap: () async {
-                              if (!await launchUrl(modal().urlList[index])) {
+                              if (socialName[index] == 'Google') {
+                                await _loginWithGoogle();
+                              } else if (socialName[index] == 'Phone') {
+                                navigateTo(const PhoneVerification());
+                              } else if (!await launchUrl(modal().urlList[index])) {
                                 throw Exception('Could not launch ${modal().urlList[index]}');
                               }
                             },
                             child: Container(
                               height: 38,
-                              padding: const EdgeInsets.symmetric(horizontal: 15),
+                              padding: const EdgeInsets.symmetric(horizontal: 18),
                               margin: const EdgeInsets.symmetric(horizontal: 5),
                               decoration: BoxDecoration(
                                 color: notifire.getContentColor,
@@ -1012,7 +1372,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                 children: [
                                   Image.asset(social[index], height: 16),
                                   const SizedBox(width: 10),
-                                  Text(socialName[index], style: TextStyle(fontSize: 12, color: notifire.getContainer, fontFamily: FontFamily.qBold, fontWeight: FontWeight.w700)),
+                                  Text(socialName[index], style: TextStyle(fontSize: 9, color: notifire.getContainer, fontFamily: FontFamily.qBold, fontWeight: FontWeight.w700)),
                                 ],
                               ),
                             ),
@@ -1022,13 +1382,15 @@ class _SignupScreenState extends State<SignupScreen> {
                     }
                   ),
                 ),
-                const SizedBox(height: 10),
+
                 Row(
                   children: [
                     Text("Already registered?".tr, style: const TextStyle(color: Colors.grey, fontSize: 12, fontFamily: FontFamily.qBold, fontWeight: FontWeight.w700), overflow: TextOverflow.ellipsis,),
                     InkWell(
                         onTap: () {
+                          showLoadingOverlay(context);
                           Get.to(const LoginScreen());
+                          hideLoadingOverlay();
                         },
                         child: Text(" Log In".tr, style: TextStyle(color: notifire.getContainer, fontSize: 12, fontFamily: FontFamily.qBold, fontWeight: FontWeight.w700), overflow: TextOverflow.ellipsis,)),
                   ],

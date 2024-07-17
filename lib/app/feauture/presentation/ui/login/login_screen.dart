@@ -8,10 +8,14 @@ import 'package:sitecycle/app/config/fontfamily_modal.dart';
 import 'package:sitecycle/app/config/images.dart';
 import 'package:sitecycle/app/config/list_modal.dart';
 import 'package:sitecycle/app/data/datasource/auth/login_case_use.dart';
+import 'package:sitecycle/app/data/utils/email_validator.dart';
+import 'package:sitecycle/app/data/utils/snackbar_verifications.dart';
 import 'package:sitecycle/app/feauture/presentation/ui/forgot_password/forgot_password_screen.dart';
 import 'package:sitecycle/app/feauture/presentation/ui/register/register_screen.dart';
-import 'package:sitecycle/app/feauture/presentation/ui/forgot_password/phone_verification_screen.dart';
+import 'package:sitecycle/app/feauture/presentation/ui/login/phone_verification_screen.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:url_launcher/url_launcher.dart';
+  // Importa tu nuevo archivo
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -23,13 +27,16 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   bool isChecked = false;
   bool passwordVisible = true;
+  bool isLoading = false;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final FocusNode _emailFocusNode = FocusNode();
+  final FocusNode _passwordFocusNode = FocusNode();
 
   List social = [
     Appcontent.google,
-    Appcontent.phoneIcon, // Reemplazar Facebook por Phone
-    Appcontent.apple, // Reemplazar Discord por Apple
+    Appcontent.phoneIcon,
+    Appcontent.apple,
   ];
   List socialName = [
     'Google',
@@ -39,6 +46,13 @@ class _LoginScreenState extends State<LoginScreen> {
   late ColorNotifire notifire;
 
   bool previusstate = false;
+
+  @override
+  void initState() {
+    getdarkmodepreviousstate();
+    super.initState();
+  }
+
   getdarkmodepreviousstate() async {
     final prefs = await SharedPreferences.getInstance();
     previusstate = prefs.getBool("setIsDark") ?? false;
@@ -49,22 +63,67 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  // bool _isEmailValid(String email) {
+  //   final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+  //   return emailRegex.hasMatch(email);
+  // }
+
   Future<void> _login() async {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      SnackbarHelper.showSnackbar(
+        title: 'Error',
+        message: 'All fields are required',
+      );
+      return;
+    }
+
+    if (!isValidEmail(_emailController.text)) {
+      SnackbarHelper.showSnackbar(
+        title: 'Error',
+        message: 'Invalid email format',
+      );
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
     await CUFirebaseAuthLogin.login(
       context: context,
       email: _emailController.text,
       password: _passwordController.text,
     );
+
+    setState(() {
+      isLoading = false;
+    });
   }
 
   Future<void> _loginWithGoogle() async {
+    setState(() {
+      isLoading = true;
+    });
+
     await CUFirebaseAuthLogin.signInWithGoogle(context: context);
+
+    setState(() {
+      isLoading = false;
+    });
   }
 
-  @override
-  void initState() {
-    getdarkmodepreviousstate();
-    super.initState();
+  Future<void> navigateTo(Widget screen) async {
+    setState(() {
+      isLoading = true;
+    });
+
+    await Future.delayed(const Duration(seconds: 2));
+
+    setState(() {
+      isLoading = false;
+    });
+
+    Get.to(screen);
   }
 
   @override
@@ -72,14 +131,28 @@ class _LoginScreenState extends State<LoginScreen> {
     notifire = Provider.of(context, listen: true);
     return Scaffold(
       backgroundColor: notifire.getBgColor,
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          return constraints.maxWidth < 870
-              ? login2(constraints)
-              : constraints.maxWidth < 1328
-                  ? login1(constraints)
-                  : login(constraints);
-        },
+      body: Stack(
+        children: [
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return constraints.maxWidth < 870
+                  ? login2(constraints)
+                  : constraints.maxWidth < 1328
+                      ? login1(constraints)
+                      : login(constraints);
+            },
+          ),
+          if (isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.5),
+              child: const Center(
+                child: SpinKitFadingCircle(
+                  color: Colors.white,
+                  size: 50.0,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -144,6 +217,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: TextField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
+                      focusNode: _emailFocusNode,
                       style: TextStyle(
                           fontSize: 14,
                           color: notifire.getContainer,
@@ -170,6 +244,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             borderRadius:
                                 BorderRadius.all(Radius.circular(12))),
                       ),
+                      onSubmitted: (value) {
+                        _emailFocusNode.unfocus();
+                        FocusScope.of(context).requestFocus(_passwordFocusNode);
+                      },
                     ),
                   ),
                   Text(
@@ -185,6 +263,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     margin: const EdgeInsets.symmetric(vertical: 13),
                     child: TextField(
                       controller: _passwordController,
+                      focusNode: _passwordFocusNode,
                       style: TextStyle(
                           fontSize: 14,
                           color: notifire.getContainer,
@@ -223,6 +302,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             borderRadius:
                                 BorderRadius.all(Radius.circular(12))),
                       ),
+                      onSubmitted: (value) {
+                        _passwordFocusNode.unfocus();
+                        _login();
+                      },
                     ),
                   ),
                   SizedBox(
@@ -252,7 +335,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const Spacer(),
                         InkWell(
                             onTap: () {
-                              Get.to(const PhoneVerification());
+                              navigateTo(const PhoneVerification());
                             },
                             child: Text(
                               'Forgot password?'.tr,
@@ -309,7 +392,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   if (socialName[index] == 'Google') {
                                     await _loginWithGoogle();
                                   } else if (socialName[index] == 'Phone') {
-                                    Get.to(const PhoneVerification());
+                                    navigateTo(const PhoneVerification());
                                   } else if (socialName[index] == 'Apple') {
                                     // Agrega la funcionalidad de inicio de sesión con Apple aquí
                                   } else if (!await launchUrl(
@@ -360,7 +443,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       InkWell(
                           onTap: () {
-                            Get.to(const SignupScreen());
+                            navigateTo(const SignupScreen());
                           },
                           child: Text(
                             " Try Sign Up".tr,
@@ -421,7 +504,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: [
                           SizedBox(
                               height: 45,
-                              // width: 45,
                               child: Image.asset(
                                 Appcontent.miracleLogo,
                                 color: Colors.white,
@@ -520,6 +602,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: TextField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
+                      focusNode: _emailFocusNode,
                       style: TextStyle(
                           fontSize: 11,
                           color: notifire.getContainer,
@@ -541,6 +624,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               borderSide: BorderSide.none,
                               borderRadius:
                                   BorderRadius.all(Radius.circular(12)))),
+                      onSubmitted: (value) {
+                        _emailFocusNode.unfocus();
+                        FocusScope.of(context).requestFocus(_passwordFocusNode);
+                      },
                     ),
                   ),
                   Text(
@@ -558,6 +645,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     margin: const EdgeInsets.symmetric(vertical: 13),
                     child: TextField(
                       controller: _passwordController,
+                      focusNode: _passwordFocusNode,
                       style: TextStyle(
                           fontSize: 11,
                           color: notifire.getContainer,
@@ -592,6 +680,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             borderRadius:
                                 BorderRadius.all(Radius.circular(12))),
                       ),
+                      onSubmitted: (value) {
+                        _passwordFocusNode.unfocus();
+                        _login();
+                      },
                     ),
                   ),
                   SizedBox(
@@ -623,7 +715,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const Spacer(),
                         InkWell(
                             onTap: () {
-                              Get.to(const ForgotPasswordScreen());
+                              navigateTo(const ForgotPasswordScreen());
                             },
                             child: Text(
                               'Forgot password?'.tr,
@@ -721,7 +813,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   InkWell(
                     onTap: () {
-                      Get.to(const SignupScreen());
+                      navigateTo(const SignupScreen());
                     },
                     child: RichText(
                         overflow: TextOverflow.ellipsis,
@@ -788,7 +880,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: [
                           SizedBox(
                               height: 45,
-                              // width: 45,
                               child: Image.asset(
                                 Appcontent.miracleLogo,
                                 color: Colors.white,
@@ -879,6 +970,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _emailController,
                     autofillHints: const [AutofillHints.email],
                     keyboardType: TextInputType.emailAddress,
+                    focusNode: _emailFocusNode,
                     style: TextStyle(
                         fontSize: 11,
                         color: notifire.getContainer,
@@ -904,6 +996,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderRadius:
                               const BorderRadius.all(Radius.circular(12))),
                     ),
+                    onSubmitted: (value) {
+                      _emailFocusNode.unfocus();
+                      FocusScope.of(context).requestFocus(_passwordFocusNode);
+                    },
                   ),
                 ),
                 Text(
@@ -918,6 +1014,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   margin: const EdgeInsets.symmetric(vertical: 13),
                   child: TextField(
                     controller: _passwordController,
+                    focusNode: _passwordFocusNode,
                     style: const TextStyle(fontSize: 11),
                     obscureText: passwordVisible,
                     decoration: InputDecoration(
@@ -951,6 +1048,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderRadius:
                               const BorderRadius.all(Radius.circular(12))),
                     ),
+                    onSubmitted: (value) {
+                      _passwordFocusNode.unfocus();
+                      _login();
+                    },
                   ),
                 ),
                 SizedBox(
@@ -979,7 +1080,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       const Spacer(),
                       InkWell(
                           onTap: () {
-                            Get.to(const PhoneVerification());
+                            navigateTo(const PhoneVerification());
                           },
                           child: Text(
                             'Forgot password?'.tr,
@@ -1085,7 +1186,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     InkWell(
                         onTap: () {
-                          Get.to(const SignupScreen());
+                          navigateTo(const SignupScreen());
                         },
                         child: Text(
                           " Try Sign Up".tr,
