@@ -1,5 +1,4 @@
-class Appcontent{
-
+class Appcontent {
   static const String shareIcon = "assets/shareIcon.svg";
   static const String drawerIcon = "assets/drawericon.svg";
 
@@ -20,6 +19,9 @@ class Appcontent{
   static const String facebook = "assets/logos_facebook.png";
   static const String discord = "assets/skill-icons_discord.png";
   static const String copyright = "assets/vaadin_copyright.png";
+  static const String apple = "assets/apple.png";
+  static const String phoneIcon = "assets/phone_icon.png";
+
 
   // Blog
   static const String blog1 = "assets/workingeople.png";
@@ -28,20 +30,24 @@ class Appcontent{
   static const String blog4 = "assets/trading.png";
 
   static const String phone = "assets/phone.svg";
+
   // Country Image
   static const String africa = "assets/Country=africa.png";
   static const String indonesia = "assets/Country=indonesia.png";
-  static const String spain = "assets/Country=Spain (ES), Component=Country Flag.png";
-  static const String arabic = "assets/Country=United Arab Emirates (AE), Component=Country Flag.png";
-  static const String america = "assets/Country=United States of America (US), Component=Country Flag.png";
+  static const String spain =
+      "assets/Country=Spain (ES), Component=Country Flag.png";
+  static const String arabic =
+      "assets/Country=United Arab Emirates (AE), Component=Country Flag.png";
+  static const String america =
+      "assets/Country=United States of America (US), Component=Country Flag.png";
 
   //appbar Image
-  static const String  bellIcon = "assets/bellIcon.svg";
-  static const String  userIcon = "assets/userIcon.svg";
-  static const String  messagedotsIcon = "assets/messageIcon.svg";
-  static const String  settingsIcon = "assets/settingIcon.svg";
-  static const String  dollarIcon = "assets/dollarIcon.svg";
-  static const String  activityIcon = "assets/activityIcon.svg";
+  static const String bellIcon = "assets/bellIcon.svg";
+  static const String userIcon = "assets/userIcon.svg";
+  static const String messagedotsIcon = "assets/messageIcon.svg";
+  static const String settingsIcon = "assets/settingIcon.svg";
+  static const String dollarIcon = "assets/dollarIcon.svg";
+  static const String activityIcon = "assets/activityIcon.svg";
 
   //billing
   static const String carEnergy = "assets/carenergy.png";
@@ -119,7 +125,8 @@ class Appcontent{
   static const String send = "assets/ic_sharp-send.png";
   static const String fluentPassword = "assets/fluent_password-24-filled.png";
   static const String roundPayment = "assets/ic_round-payment.png";
-  static const String notificationActive = "assets/mdi_notifications-active.png";
+  static const String notificationActive =
+      "assets/mdi_notifications-active.png";
   static const String earningBg = "assets/earningBg.png";
   static const String saleBg = "assets/salesBg.png";
   static const String analyticsBg = "assets/analyticsBg.png";

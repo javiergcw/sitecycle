@@ -28,6 +28,7 @@ class CUFirebaseAuthLogin {
       );
     }
   }
+
   static Future<void> signInWithGoogle({
     required BuildContext context,
   }) async {
@@ -41,6 +42,41 @@ class CUFirebaseAuthLogin {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Failed to sign in with Google.')),
+      );
+    }
+  }
+
+  static Future<void> signInWithPhone({
+    required BuildContext context,
+    required String phoneNumber,
+    required Function(String verificationId) codeSentCallback,
+  }) async {
+    await SFirebaseAuthLogin.signInWithPhone(
+      context: context,
+      phoneNumber: phoneNumber,
+      codeSentCallback: codeSentCallback,
+    );
+  }
+
+  static Future<void> verifySmsCode({
+    required BuildContext context,
+    required String verificationId,
+    required String smsCode,
+  }) async {
+    await SFirebaseAuthLogin.verifySmsCode(
+      context: context,
+      verificationId: verificationId,
+      smsCode: smsCode,
+    );
+
+    if (FirebaseAuth.instance.currentUser != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Phone verification successful!')),
+      );
+      Get.offAll(const DrawerMain());
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to verify phone number.')),
       );
     }
   }

@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
@@ -11,9 +10,7 @@ import 'package:sitecycle/app/config/list_modal.dart';
 import 'package:sitecycle/app/data/datasource/auth/login_case_use.dart';
 import 'package:sitecycle/app/feauture/presentation/ui/register/register_screen.dart';
 import 'package:sitecycle/app/feauture/presentation/ui/forgot_password/phone_verification_screen.dart';
-import 'package:sitecycle/app/service/firebase/auth/login.dart';
 import 'package:url_launcher/url_launcher.dart';
- // Importa el servicio de autenticación
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -30,13 +27,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
   List social = [
     Appcontent.google,
-    Appcontent.facebook,
-    Appcontent.discord,
+    Appcontent.phoneIcon, // Reemplazar Facebook por Phone
+    Appcontent.apple, // Reemplazar Discord por Apple
   ];
   List socialName = [
     'Google',
-    'Facebook',
-    'Discord',
+    'Phone',
+    'Apple',
   ];
   late ColorNotifire notifire;
 
@@ -60,8 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _loginWithGoogle() async {
-  await CUFirebaseAuthLogin.signInWithGoogle(context: context,);
- 
+    await CUFirebaseAuthLogin.signInWithGoogle(context: context);
   }
 
   @override
@@ -311,6 +307,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 onTap: () async {
                                   if (socialName[index] == 'Google') {
                                     await _loginWithGoogle();
+                                  } else if (socialName[index] == 'Phone') {
+                                    Get.to(const PhoneVerification());
+                                  } else if (socialName[index] == 'Apple') {
+                                    // Agrega la funcionalidad de inicio de sesión con Apple aquí
                                   } else if (!await launchUrl(
                                       modal().urlList[index])) {
                                     throw Exception(
@@ -680,6 +680,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 onTap: () async {
                                   if (socialName[index] == 'Google') {
                                     await _loginWithGoogle();
+                                  } else if (socialName[index] == 'Phone') {
+                                    // Agrega la funcionalidad de inicio de sesión con Phone aquí
+                                  } else if (socialName[index] == 'Apple') {
+                                    // Agrega la funcionalidad de inicio de sesión con Apple aquí
                                   } else if (!await launchUrl(
                                       modal().urlList[index])) {
                                     throw Exception(
@@ -940,8 +944,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       fillColor: notifire.getContentColor,
                       border: const OutlineInputBorder(
                           borderSide: BorderSide.none,
-                          borderRadius:
-                              BorderRadius.all(Radius.circular(12))),
+                          borderRadius: BorderRadius.all(Radius.circular(12))),
                       focusedBorder: OutlineInputBorder(
                           borderSide: BorderSide(color: blue),
                           borderRadius:
@@ -1030,6 +1033,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               onTap: () async {
                                 if (socialName[index] == 'Google') {
                                   await _loginWithGoogle();
+                                } else if (socialName[index] == 'Phone') {
+                                  // Agrega la funcionalidad de inicio de sesión con Phone aquí
+                                } else if (socialName[index] == 'Apple') {
+                                  // Agrega la funcionalidad de inicio de sesión con Apple aquí
                                 } else if (!await launchUrl(
                                     modal().urlList[index])) {
                                   throw Exception(
@@ -1038,8 +1045,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               },
                               child: Container(
                                 height: 38,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 15),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 15),
                                 margin:
                                     const EdgeInsets.symmetric(horizontal: 5),
                                 decoration: BoxDecoration(
