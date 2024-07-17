@@ -81,6 +81,16 @@ class CUFirebaseAuthLogin {
     }
   }
 
+  static Future<void> resetPassword({
+    required BuildContext context,
+    required String email,
+  }) async {
+    await SFirebaseAuthLogin.resetPassword(
+      context: context,
+      email: email,
+    );
+  }
+
   static Future<void> signOut({
     required BuildContext context,
   }) async {

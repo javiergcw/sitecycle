@@ -8,6 +8,7 @@ import 'package:sitecycle/app/config/fontfamily_modal.dart';
 import 'package:sitecycle/app/config/images.dart';
 import 'package:sitecycle/app/config/list_modal.dart';
 import 'package:sitecycle/app/data/datasource/auth/login_case_use.dart';
+import 'package:sitecycle/app/feauture/presentation/ui/forgot_password/forgot_password_screen.dart';
 import 'package:sitecycle/app/feauture/presentation/ui/register/register_screen.dart';
 import 'package:sitecycle/app/feauture/presentation/ui/forgot_password/phone_verification_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -622,7 +623,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const Spacer(),
                         InkWell(
                             onTap: () {
-                              Get.to(const PhoneVerification());
+                              Get.to(const ForgotPasswordScreen());
                             },
                             child: Text(
                               'Forgot password?'.tr,
